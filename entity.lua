@@ -29,6 +29,10 @@ function entity.new(id)
     newEntity.update = entity.update
     newEntity.draw = entity.draw
     
+    newEntity._preInteract = entity._preInteract
+    newEntity.onInteract = entity.onInteract
+    newEntity._postInteract = entity._postInteract
+    
     return newEntity
 
 end
@@ -171,6 +175,37 @@ function entity:draw()
         love.graphics.setColor(0,0,255,255)
         love.graphics.circle('line', self.x, self.y, self.radius)
     end
+end
+
+function entity:_preInteract(sourceEntity)
+
+    -- It's weird to keep moving when something is interacting with us
+    self:stopMovement()
+    self.canMove = false
+    
+    -- Face the entity that is interacting with us
+    if sourceEntity.direction == 'left' then
+        self.direction = 'right'
+    elseif sourceEntity.direction == 'right' then
+        self.direction = 'left'
+    elseif sourceEntity.direction == 'up' then
+        self.direction = 'down'
+    else
+        self.direction = 'up'
+    end
+end
+
+function entity:onInteract(sourceEntity)
+    if self.interact then
+        self:_preInteract(sourceEntity)
+        self.interact(function()
+            self:_postInteract(sourceEntity)
+        end)
+    end
+end
+
+function entity:_postInteract(sourceEntity)
+    self.canMove = true
 end
 
 

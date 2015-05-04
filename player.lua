@@ -23,6 +23,8 @@ function love.keypressed(key,unicode)
             local checkX = player.tileX
             local checkY = player.tileY
             
+            player.notifyObservers(player.id,'oninteract', checkX, checkY)
+            
             if player.direction == 'up' then
                 checkY = checkY - 1
             elseif player.direction == 'down' then
