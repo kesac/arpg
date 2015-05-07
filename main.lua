@@ -23,17 +23,17 @@ function love.load()
     -- kikito's Inspect for debugging
     game.inspect = require 'inspect.inspect'
 
-    -- Some initial text setup
-	-- game.font.setDefaultFont('fonts/ken_fonts/kenpixel.ttf')
-    game.font.setDefaultFont('fonts/PressStart2P/PressStart2P.ttf')
-	game.text.init(game.font.get(16))
-
-    game.addScene(require 'scene.test', 'test')
-    game.addScene(require 'scene.test2', 'test2')
     game.addScene(require 'scene.world', 'world')
-
     game.setCurrentScene('world')
-    game.debug = false
+
+    -- The following are defined in the world scene:
+    -- game.maps
+    -- game.player
+    -- game.entities (shortcut to entities of current map)
+
+    game.font.setDefaultFont('fonts/PressStart2P/PressStart2P.ttf')
+	game.text.init(game.font.get(16))    
+    game.debug = true
 
 end
 

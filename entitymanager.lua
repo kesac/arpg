@@ -25,20 +25,21 @@ function lib.new(physicsWorld)
 end
 
 function lib:add(entity)
+    entity:initializePhysics(self.physicsWorld)
     table.insert(self.entities,entity)
 end
 
 function lib:addNPC(id, imagePath, x, y)
     local entity = require('entity').new(id)
-    entity.x = x
-    entity.y = y
-    
+    entity.x = x or 0
+    entity.y = y or 0
+
     entity:setSprite(imagePath)
     entity:initializePhysics(self.physicsWorld)
     entity.updateMovement = require('entitymovement').basicRandom
-    
+
     table.insert(self.entities,entity)
-    
+
     return entity
 end
 
@@ -74,11 +75,19 @@ function lib:clear()
 end
 
 function lib:update(dt)
-    for _,entity in pairs(self.entities) do
+
+    for i = #self.entities, 1, -1 do
+        local entity = self.entities[i]
         if entity.update then
             entity:update(dt)
+        
+            if entity.duration and entity.duration <= 0 then
+                entity:destroyBody()
+                table.remove(self.entities, i)
+            end
         end
     end
+
 end
 
 function lib:draw()

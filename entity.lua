@@ -4,7 +4,7 @@
 -- Kevin Sacro
 
 local entity = {}
-local _tileWidth = love.physics.getMeter() or 1
+entity.tileWidth = love.physics.getMeter() or 1
 
 function entity.new(id)
 
@@ -16,7 +16,6 @@ function entity.new(id)
     newEntity.y = 150
     newEntity.tileX = entity._toTileCoordinate(newEntity.x)
     newEntity.tileY = entity._toTileCoordinate(newEntity.y)
-    
 
     newEntity.mode = 'moving'
     newEntity.direction = 'down'
@@ -24,11 +23,13 @@ function entity.new(id)
     newEntity.initializePhysics = entity.initializePhysics
     newEntity.setSprite = entity.setSprite
     
+    newEntity.applyForce = entity.applyForce
     newEntity.stopMovement = entity.stopMovement
-    newEntity.moveToTile = entity.moveToTile
+    newEntity.setLocation = entity.setLocation
+    newEntity.setTileLocation = entity.setTileLocation
     newEntity.update = entity.update
     newEntity.draw = entity.draw
-    
+
     newEntity._preInteract = entity._preInteract
     newEntity.onInteract = entity.onInteract
     newEntity._postInteract = entity._postInteract
@@ -38,17 +39,22 @@ function entity.new(id)
 end
 
 function entity:initializePhysics(physicsWorld)
-    self.speed = 2000
-    self.friction = 20
-    self.radius = 16
     
     self.physics = {}
+    
+    self.speed = self.speed or 2000
+    self.friction = self.friction or 20
+
     self.physics.world = physicsWorld
-    self.physics.shape = love.physics.newCircleShape(self.radius)
+    self.physics.shape = self.shape or love.physics.newCircleShape(16)
     self.physics.body = love.physics.newBody(physicsWorld, self.x, self.y, 'dynamic')
     self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
     self.physics.body:setLinearDamping(self.friction)
-
+    
+    if self.mass then
+        self.physics.body:setMass(self.mass)
+    end
+    
     self.destroyBody = entity.destroyBody
     self.restoreBody = entity.restoreBody
 end
@@ -71,26 +77,35 @@ function entity:setSprite(imagePath)
 end
 
 function entity._toTileCoordinate(coordinate)
-    return math.floor(coordinate/_tileWidth)
+    return math.floor(coordinate/entity.tileWidth)
 end
 
-function entity:moveToTile(tileX, tileY)
+function entity:setLocation(x,y)
+    self.x = x
+    self.y = y
+    self.tileX = x * entity.tileWidth
+    self.tileY = y * entity.tileWidth
+    
+    if self.physics then
+        self.physics.body:setX(x)
+        self.physics.body:setY(y)
+    end
+end
+
+function entity:setTileLocation(tileX, tileY)
     self.tileX = tileX
     self.tileY = tileY
 
-    self.x = self.tileX * _tileWidth + _tileWidth/2
-    self.y = self.tileY * _tileWidth + _tileWidth/2
+    self.x = self.tileX * entity.tileWidth + entity.tileWidth/2
+    self.y = self.tileY * entity.tileWidth + entity.tileWidth/2
 
-    self.physics.body:setX(self.x)
-    self.physics.body:setY(self.y)
-end
-
-function entity:stopMovement()
-    self.physics.body:setLinearVelocity(0,0)
+    if self.physics then
+        self.physics.body:setX(self.x)
+        self.physics.body:setY(self.y)
+    end
 end
 
 function entity:restoreBody(physicsWorld)
-
     self.physics.body = love.physics.newBody(physicsWorld, self.x, self.y, 'dynamic')
     self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
     self.physics.body:setLinearDamping(self.friction)
@@ -101,9 +116,22 @@ function entity:destroyBody()
     self.physics.body = nil
 end
 
+function entity:applyForce(vector,speed)
+    vector:normalize_inplace()
+    speed = speed or self.speed
+    vector = vector * speed
+    self.physics.body:applyForce(vector.x, vector.y)
+end
+
+function entity:stopMovement()
+    self.physics.body:setLinearVelocity(0,0)
+end
 
 function entity:update(dt)
 
+    if self.duration then
+        self.duration = self.duration - dt
+    end
 
     if self.canMove then
     
@@ -154,12 +182,13 @@ function entity:update(dt)
         self.mode = 'stationary'
     end
 
+    if self.sprite then
+        self.sprite.current = self.sprite[self.mode][self.direction]
+        self.sprite.current.x = self.x - 32
+        self.sprite.current.y = self.y - 36 - 20
 
-    self.sprite.current = self.sprite[self.mode][self.direction]
-    self.sprite.current.x = self.x - 32
-    self.sprite.current.y = self.y - 36 - 20
-
-    self.sprite.current:update(dt)
+        self.sprite.current:update(dt)
+    end
     --end
 end
 
@@ -173,7 +202,7 @@ function entity:draw()
 
     if game.debug then
         love.graphics.setColor(0,0,255,255)
-        love.graphics.circle('line', self.x, self.y, self.radius)
+        love.graphics.circle('line', self.x, self.y, self.physics.shape:getRadius())
     end
 end
 
