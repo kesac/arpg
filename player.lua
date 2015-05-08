@@ -16,7 +16,7 @@ function player:updateMovement(dt, forceVector)
 
 end
 
-function love.keypressed(key,unicode)
+function player.keypressed(key,unicode)
 
     if key == 'x' then
 

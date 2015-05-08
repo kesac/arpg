@@ -41,7 +41,7 @@ end
 function entity:initializePhysics(physicsWorld)
     
     self.physics = {}
-    
+
     self.speed = self.speed or 2000
     self.friction = self.friction or 20
 
