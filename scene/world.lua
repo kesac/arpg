@@ -11,7 +11,7 @@ local scene = {}
 
 function scene.initialize(manager)
 
-    game.maps = require 'libtsl.rpg.stiwrapper'
+    game.maps = require 'libtsl.rpg.mapmanager'
     love.physics.setMeter(48)
     game.maps.tileWidth = love.physics.getMeter()
 
@@ -22,9 +22,12 @@ function scene.initialize(manager)
     game.entities = game.maps.currentMap.entities
 
     game.player  = require 'player' 
-    game.player:initializePhysics(game.maps.physics.world)
     game.player.addObserver(scene)
-    
+
+    game.player:setPhysicsWorld(game.maps.physics.world)
+    game.player:initializeBody()
+    game.player:setTileLocation(1,1)
+
     game.text.preDisplayText = function()
         game.player.canMove = false
         game.player:stopMovement()
@@ -56,7 +59,7 @@ function scene.draw()
         love.graphics.setColor(255, 0, 0, 255)
         game.maps.currentMap:drawWorldCollision(game.maps.physics.mapCollision)
         
-        --[[
+        
         local bodies = game.maps.physics.world:getBodyList()
         
         love.graphics.setColor(0, 255, 0, 255)
@@ -88,7 +91,7 @@ function scene.notify(source, eventTrigger, ...)
             local entity = game.entities:getEntityAtTile(args[1], args[2])
 
             if entity and entity.interact then
-                entity:onInteract(game.player)
+                entity:onPlayerInteract(game.player)
                 return
             end
         end

@@ -7,7 +7,7 @@
 
 local lib = {}
 
-function lib:basicRandom(dt, force)
+function lib:randomWalk(dt, force)
   
     if not self.movedelay then
         self.movedelay = 0

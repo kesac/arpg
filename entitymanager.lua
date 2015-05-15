@@ -24,9 +24,13 @@ function lib.new(physicsWorld)
     return manager
 end
 
-function lib:add(entity)
-    entity:initializePhysics(self.physicsWorld)
+function lib:add(entity, initializeBody)
+    entity:setPhysicsWorld(self.physicsWorld)
     table.insert(self.entities,entity)
+    
+    if initializeBody then
+        entity:initializeBody()
+    end
 end
 
 function lib:addNPC(id, imagePath, x, y)
@@ -35,8 +39,8 @@ function lib:addNPC(id, imagePath, x, y)
     entity.y = y or 0
 
     entity:setSprite(imagePath)
-    entity:initializePhysics(self.physicsWorld)
-    entity.updateMovement = require('entitymovement').basicRandom
+    entity:setPhysicsWorld(self.physicsWorld)
+    entity.updateMovement = require('entitymovement').randomWalk
 
     table.insert(self.entities,entity)
 
@@ -63,7 +67,7 @@ end
 
 function lib:restorePhysicsBodies()
     for i = 1, #self.entities do
-        self.entities[i]:restoreBody(self.physicsWorld)
+        self.entities[i]:initializeBody()
     end
 end
 

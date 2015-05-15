@@ -10,7 +10,7 @@ function love.load()
     game.utf8    = require 'libtsl.utf8'         -- utf8 string manipulation
     game.font    = require 'libtsl.font'         -- convenience object for font calls
 	game.text    = require 'libtsl.rpg.text'     -- rpg-like text system
-    game.data    = require 'libtsl.data'
+    game.data    = require 'libtsl.data'         -- save to file
     game.async   = require 'libtsl.async'
     game.sprite  = require 'libtsl.sprite'
     game.sprites = require 'libtsl.spritemanager'
@@ -38,24 +38,24 @@ function love.load()
 end
 
 function love.update(dt)
-	game.update(dt) -- Update the current scene
+	game.update(dt)
     game.sprites.update(dt)
-    game.text.update(dt) -- For text scrolling
+    game.text.update(dt)
     game.timer.update(dt)
 end
 
 function love.draw()
     game.camera:attach()
-    game.draw() -- Draw the current scene
+    game.draw()
     game.sprites.draw()
     game.camera:detach()
-    game.text.draw() -- To display text boxes
+    game.text.draw()
 end
 
 function love.keypressed(key,unicode)
-	game.keypressed(key,unicode) -- Delegate event to current scene
+	game.keypressed(key,unicode)
 end
 
 function love.keyreleased(key)
-	game.keyreleased(key) -- Delegate event to current scene
+	game.keyreleased(key)
 end

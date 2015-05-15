@@ -34,6 +34,8 @@ function player.keypressed(key,unicode)
         end
         
         game.entities:add(slash)
+        slash:initializeBody()
+        slash.physics.body:setMass(1)
 
         local vector = game.vector.new(0,0)
         

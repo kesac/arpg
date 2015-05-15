@@ -6,21 +6,30 @@
 local entity = {}
 entity.tileWidth = love.physics.getMeter() or 1
 
-function entity.new(id)
+function entity.new(id, shape)
 
     local newEntity = require('libtsl.observable').new()
-    newEntity.id = id
-    newEntity.canMove = true
 
-    newEntity.x = 50
-    newEntity.y = 150
+    newEntity.id = id
+    newEntity.x = 0
+    newEntity.y = 0
     newEntity.tileX = entity._toTileCoordinate(newEntity.x)
     newEntity.tileY = entity._toTileCoordinate(newEntity.y)
 
+    newEntity.canMove = true
     newEntity.mode = 'moving'
     newEntity.direction = 'down'
+
+    newEntity.physics = {}
+    newEntity.speed = 2000
+    newEntity.friction = 20
+    newEntity.physics.shape = shape or love.physics.newCircleShape(16)
+
+    -- functions
+    newEntity.setPhysicsWorld = entity.setPhysicsWorld
+    newEntity.initializeBody = entity.initializeBody
+    newEntity.destroyBody = entity.destroyBody
     
-    newEntity.initializePhysics = entity.initializePhysics
     newEntity.setSprite = entity.setSprite
     
     newEntity.applyForce = entity.applyForce
@@ -30,54 +39,43 @@ function entity.new(id)
     newEntity.update = entity.update
     newEntity.draw = entity.draw
 
-    newEntity._preInteract = entity._preInteract
-    newEntity.onInteract = entity.onInteract
-    newEntity._postInteract = entity._postInteract
-    
-    return newEntity
+    newEntity._prePlayerInteract = entity._prePlayerInteract
+    newEntity.onPlayerInteract = entity.onPlayerInteract
+    newEntity._postPlayerInteract = entity._postPlayerInteract
 
+    return newEntity
 end
 
-function entity:initializePhysics(physicsWorld)
-    
-    self.physics = {}
+function entity:setPhysicsWorld(physicsWorld)
 
-    self.speed = self.speed or 2000
-    self.friction = self.friction or 20
+    if self.physics.body then
+        self:destroyBody()
+    end
 
     self.physics.world = physicsWorld
-    self.physics.shape = self.shape or love.physics.newCircleShape(16)
-    self.physics.body = love.physics.newBody(physicsWorld, self.x, self.y, 'dynamic')
-    self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
-    self.physics.body:setLinearDamping(self.friction)
-    
-    if self.mass then
-        self.physics.body:setMass(self.mass)
-    end
-    
-    self.destroyBody = entity.destroyBody
-    self.restoreBody = entity.restoreBody
+      
 end
 
-function entity:setSprite(imagePath)
+function entity:setSprite(imagePath, spriteTable)
     self.image = love.graphics.newImage(imagePath)
-    self.sprite = {}
-    self.sprite.moving = {}
-    self.sprite.moving.up    = game.sprite.create(self.image, 4, 4, 0.15, 1,  4):loop()
-    self.sprite.moving.down  = game.sprite.create(self.image, 4, 4, 0.15, 9,  12):loop()
-    self.sprite.moving.down  = game.sprite.create(self.image, 4, 4, 0.15, 9,  12):loop()
-    self.sprite.moving.left  = game.sprite.create(self.image, 4, 4, 0.15, 13, 16):loop()
-    self.sprite.moving.right = game.sprite.create(self.image, 4, 4, 0.15, 5,  8):loop()
     
-    self.sprite.stationary = {}
-    self.sprite.stationary.up    = game.sprite.create(self.image, 4, 4, 0.15, 2,  2):loop()
-    self.sprite.stationary.down  = game.sprite.create(self.image, 4, 4, 0.15, 10, 10):loop()
-    self.sprite.stationary.left  = game.sprite.create(self.image, 4, 4, 0.15, 14, 14):loop()
-    self.sprite.stationary.right = game.sprite.create(self.image, 4, 4, 0.15, 6,  6):loop()
-end
-
-function entity._toTileCoordinate(coordinate)
-    return math.floor(coordinate/entity.tileWidth)
+    if spriteTable then
+        self.sprite = spriteTable
+    else
+        self.sprite = {}
+        self.sprite.moving = {}
+        self.sprite.moving.up    = game.sprite.create(self.image, 4, 4, 0.15, 1,  4):loop()
+        self.sprite.moving.down  = game.sprite.create(self.image, 4, 4, 0.15, 9,  12):loop()
+        self.sprite.moving.down  = game.sprite.create(self.image, 4, 4, 0.15, 9,  12):loop()
+        self.sprite.moving.left  = game.sprite.create(self.image, 4, 4, 0.15, 13, 16):loop()
+        self.sprite.moving.right = game.sprite.create(self.image, 4, 4, 0.15, 5,  8):loop()
+        
+        self.sprite.stationary = {}
+        self.sprite.stationary.up    = game.sprite.create(self.image, 4, 4, 0.15, 2,  2):loop()
+        self.sprite.stationary.down  = game.sprite.create(self.image, 4, 4, 0.15, 10, 10):loop()
+        self.sprite.stationary.left  = game.sprite.create(self.image, 4, 4, 0.15, 14, 14):loop()
+        self.sprite.stationary.right = game.sprite.create(self.image, 4, 4, 0.15, 6,  6):loop()
+    end
 end
 
 function entity:setLocation(x,y)
@@ -105,26 +103,32 @@ function entity:setTileLocation(tileX, tileY)
     end
 end
 
-function entity:restoreBody(physicsWorld)
-    self.physics.body = love.physics.newBody(physicsWorld, self.x, self.y, 'dynamic')
+function entity:initializeBody()
+    self.physics.body = love.physics.newBody(self.physics.world, self.x, self.y, 'dynamic')
     self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
     self.physics.body:setLinearDamping(self.friction)
 end
 
 function entity:destroyBody()
-    self.physics.body:destroy()
-    self.physics.body = nil
+    if self.physics.body then
+        self.physics.body:destroy()
+        self.physics.body = nil
+    end
 end
 
 function entity:applyForce(vector,speed)
-    vector:normalize_inplace()
-    speed = speed or self.speed
-    vector = vector * speed
-    self.physics.body:applyForce(vector.x, vector.y)
+    if self.physics.body then
+        vector:normalize_inplace()
+        speed = speed or self.speed
+        vector = vector * speed
+        self.physics.body:applyForce(vector.x, vector.y)
+    end
 end
 
 function entity:stopMovement()
-    self.physics.body:setLinearVelocity(0,0)
+    if self.physics.body then
+        self.physics.body:setLinearVelocity(0,0)
+    end
 end
 
 function entity:update(dt)
@@ -132,7 +136,7 @@ function entity:update(dt)
     if self.duration then
         self.duration = self.duration - dt
     end
-
+    
     if self.canMove then
     
         local force = game.vector.new(0,0)
@@ -206,7 +210,7 @@ function entity:draw()
     end
 end
 
-function entity:_preInteract(sourceEntity)
+function entity:_prePlayerInteract(sourceEntity)
 
     -- It's weird to keep moving when something is interacting with us
     self:stopMovement()
@@ -224,18 +228,21 @@ function entity:_preInteract(sourceEntity)
     end
 end
 
-function entity:onInteract(sourceEntity)
+function entity:onPlayerInteract(sourceEntity)
     if self.interact then
-        self:_preInteract(sourceEntity)
+        self:_prePlayerInteract(sourceEntity)
         self.interact(function()
-            self:_postInteract(sourceEntity)
+            self:_postPlayerInteract(sourceEntity)
         end)
     end
 end
 
-function entity:_postInteract(sourceEntity)
+function entity:_postPlayerInteract(sourceEntity)
     self.canMove = true
 end
 
+function entity._toTileCoordinate(coordinate)
+    return math.floor(coordinate/entity.tileWidth)
+end
 
 return entity
