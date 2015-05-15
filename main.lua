@@ -14,6 +14,7 @@ function love.load()
     game.async   = require 'libtsl.async'
     game.sprite  = require 'libtsl.sprite'
     game.sprites = require 'libtsl.spritemanager'
+    game.entity  = require 'libtsl.rpg.entity'
 
     -- HUMP: vlrd's LÖVE Helper Utilities for Massive Progression
     game.camera  = require('hump.camera').new()

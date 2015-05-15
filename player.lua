@@ -3,7 +3,7 @@
 -- turtlesort.com
 -- Kevin Sacro
 
-local player = require('entity').new('player')
+local player = game.entity.new('player')
 player:setSprite('healer_m.png')
 
 function player:updateMovement(dt, forceVector)
@@ -20,7 +20,7 @@ function player.keypressed(key,unicode)
 
     if key == 'x' then
 
-        local slash = require('entity').new()
+        local slash = game.entity.new()
 
         slash.speed = 50000
         slash.mass = 1
