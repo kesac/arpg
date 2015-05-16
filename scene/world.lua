@@ -15,10 +15,11 @@ function scene.initialize(manager)
     love.physics.setMeter(48)
     game.maps.tileWidth = love.physics.getMeter()
 
-    game.maps.define('demo-map','maps/demo-map')
+    game.maps.define('demo-start','maps/demo-map')
     game.maps.define('demo-basement','maps/demo-basement')
+    game.maps.define('demo-outside','maps/demo-outside')
     
-    game.maps.setCurrentMap('demo-map')
+    game.maps.setCurrentMap('demo-start')
     game.entities = game.maps.currentMap.entities
 
     game.player  = require 'player' 
@@ -26,7 +27,9 @@ function scene.initialize(manager)
 
     game.player:setPhysicsWorld(game.maps.physics.world)
     game.player:initializeBody()
-    game.player:setTileLocation(1,1)
+    game.player:setTileLocation(12,7)
+    
+    game.camera.target = game.player
 
     game.text.preDisplayText = function()
         game.player.canMove = false
@@ -47,19 +50,23 @@ function scene.update(dt)
 	game.maps.physics.world:update(dt)
 	game.maps.update(dt)
     game.player:update(dt)
-    game.camera:lookAt(game.maps.currentMap.width/2 * game.maps.tileWidth, game.maps.currentMap.height/2 * game.maps.tileWidth)
+    
+    if game.camera.target then
+        game.camera:lookAt(math.floor(game.camera.target.x), math.floor(game.camera.target.y))
+    end
+
+    -- centered on map
+    --game.camera:lookAt(game.maps.currentMap.width/2 * game.maps.tileWidth, game.maps.currentMap.height/2 * game.maps.tileWidth)
 end
 
 function scene.draw()
-    
-    -- the player is implicitly here inbetween map layers (see initialize() above)
-	game.maps.draw()
-    
+    game.camera:attach()
+	game.maps.draw()     -- the player is implicitly here inbetween map layers (see initialize() above)
+
     if game.debug then
         love.graphics.setColor(255, 0, 0, 255)
         game.maps.currentMap:drawWorldCollision(game.maps.physics.mapCollision)
-        
-        
+
         local bodies = game.maps.physics.world:getBodyList()
         
         love.graphics.setColor(0, 255, 0, 255)
@@ -68,8 +75,9 @@ function scene.draw()
             love.graphics.circle("line", body:getX(), body:getY(), 10)
         end
         --]]
-
     end
+
+    game.camera:detach()
 end
 
 function scene.keypressed(key,unicode)

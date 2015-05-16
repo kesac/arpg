@@ -34,8 +34,11 @@ function love.load()
 
     game.font.setDefaultFont('fonts/PressStart2P/PressStart2P.ttf')
 	game.text.init(game.font.get(16))    
-    game.debug = true
+    game.debug = false
 
+    game.windowWidth = love.graphics.getWidth()
+    game.windowHeight = love.graphics.getHeight()
+    
 end
 
 function love.update(dt)
@@ -46,15 +49,23 @@ function love.update(dt)
 end
 
 function love.draw()
-    game.camera:attach()
+
     game.draw()
+
+    game.camera:attach()
     game.sprites.draw()
     game.camera:detach()
+
     game.text.draw()
 end
 
 function love.keypressed(key,unicode)
 	game.keypressed(key,unicode)
+    
+    if key == 'escape' then
+      love.event.quit()
+    end
+
 end
 
 function love.keyreleased(key)
