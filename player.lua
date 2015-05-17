@@ -20,37 +20,42 @@ function player.keypressed(key,unicode)
 
     if key == 'x' then
 
-        local slash = game.entity.new()
+        local radius = 12
+        local slash = game.entity.new('slash', love.physics.newCircleShape(radius))
 
-        slash.speed = 50000
-        slash.mass = 1
-        slash.shape = love.physics.newCircleShape(8)
-        slash.friction = 0
-        slash.duration = 0.05
+        slash.speed = 10000
+        slash.duration = 0.08
         
         slash.draw = function(self)
             love.graphics.setColor(0,0,255,255)
-            love.graphics.circle('line', self.x, self.y, self.physics.shape:getRadius())
+            love.graphics.circle('line', self.x, self.y, radius)
         end
         
         game.entities:add(slash)
         slash:initializeBody()
-        slash.physics.body:setMass(1)
+        slash.physics.body:setMass(0.75)
+        slash.physics.body:setLinearDamping(0)
 
-        local vector = game.vector.new(0,0)
+        local vector = game.vector.new(0,0) + game.vector.new(player.physics.body:getLinearVelocity())
+        local distance = 25
+        
+        if game.vector.new(player.physics.body:getLinearVelocity()):len() > 0 then
+            distance = distance + 10
+            slash.speed = slash.speed * 1.5
+        end
         
         if player.direction == 'up' then
             vector.y = vector.y - 1
-            slash:setLocation(player.x, player.y - 20)
+            slash:setLocation(player.x, player.y - distance)
         elseif player.direction == 'down' then
             vector.y = vector.y + 1
-            slash:setLocation(player.x, player.y + 20)
+            slash:setLocation(player.x, player.y + distance)
         elseif player.direction == 'left' then
             vector.x = vector.x - 1
-            slash:setLocation(player.x - 20, player.y)
+            slash:setLocation(player.x - distance, player.y)
         elseif player.direction == 'right' then
             vector.x = vector.x + 1
-            slash:setLocation(player.x + 20, player.y)
+            slash:setLocation(player.x + distance, player.y)
         end
 
         slash:applyForce(vector, slash.speed)
